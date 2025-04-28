@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from typing_extensions import Literal
 from utils.progress import progress
 from utils.llm import call_llm
+from i18n import get_text as _
 
 
 class PortfolioDecision(BaseModel):
@@ -23,13 +24,15 @@ class PortfolioManagerOutput(BaseModel):
 ##### Portfolio Management Agent #####
 def portfolio_management_agent(state: AgentState):
     """Makes final trading decisions and generates orders for multiple tickers"""
+    # 使用翻译的docstring
+    __doc__ = _("portfolio_manager.docstrings.agent")
 
     # Get the portfolio and analyst signals
     portfolio = state["data"]["portfolio"]
     analyst_signals = state["data"]["analyst_signals"]
     tickers = state["data"]["tickers"]
 
-    progress.update_status("portfolio_management_agent", None, "Analyzing signals")
+    progress.update_status("portfolio_management_agent", None, _("portfolio_manager.status_messages.analyzing_signals"))
 
     # Get position limits, current prices, and signals for every ticker
     position_limits = {}
@@ -37,7 +40,7 @@ def portfolio_management_agent(state: AgentState):
     max_shares = {}
     signals_by_ticker = {}
     for ticker in tickers:
-        progress.update_status("portfolio_management_agent", ticker, "Processing analyst signals")
+        progress.update_status("portfolio_management_agent", ticker, _("portfolio_manager.status_messages.processing_analyst_signals"))
 
         # Get position limits and current prices for the ticker
         risk_data = analyst_signals.get("risk_management_agent", {}).get(ticker, {})
@@ -57,7 +60,7 @@ def portfolio_management_agent(state: AgentState):
                 ticker_signals[agent] = {"signal": signals[ticker]["signal"], "confidence": signals[ticker]["confidence"]}
         signals_by_ticker[ticker] = ticker_signals
 
-    progress.update_status("portfolio_management_agent", None, "Making trading decisions")
+    progress.update_status("portfolio_management_agent", None, _("portfolio_manager.status_messages.making_trading_decisions"))
 
     # Generate the trading decision
     result = generate_trading_decision(
@@ -80,7 +83,7 @@ def portfolio_management_agent(state: AgentState):
     if state["metadata"]["show_reasoning"]:
         show_agent_reasoning({ticker: decision.model_dump() for ticker, decision in result.decisions.items()}, "Portfolio Management Agent")
 
-    progress.update_status("portfolio_management_agent", None, "Done")
+    progress.update_status("portfolio_management_agent", None, _("portfolio_manager.status_messages.done"))
 
     return {
         "messages": state["messages"] + [message],
@@ -98,81 +101,18 @@ def generate_trading_decision(
     model_provider: str,
 ) -> PortfolioManagerOutput:
     """Attempts to get a decision from the LLM with retry logic"""
+    # 使用翻译的docstring
+    __doc__ = _("portfolio_manager.docstrings.generate_trading_decision")
     # Create the prompt template
     template = ChatPromptTemplate.from_messages(
         [
             (
               "system",
-              """You are a portfolio manager making final trading decisions based on multiple tickers.
-
-              Trading Rules:
-              - For long positions:
-                * Only buy if you have available cash
-                * Only sell if you currently hold long shares of that ticker
-                * Sell quantity must be ≤ current long position shares
-                * Buy quantity must be ≤ max_shares for that ticker
-              
-              - For short positions:
-                * Only short if you have available margin (position value × margin requirement)
-                * Only cover if you currently have short shares of that ticker
-                * Cover quantity must be ≤ current short position shares
-                * Short quantity must respect margin requirements
-              
-              - The max_shares values are pre-calculated to respect position limits
-              - Consider both long and short opportunities based on signals
-              - Maintain appropriate risk management with both long and short exposure
-
-              Available Actions:
-              - "buy": Open or add to long position
-              - "sell": Close or reduce long position
-              - "short": Open or add to short position
-              - "cover": Close or reduce short position
-              - "hold": No action
-
-              Inputs:
-              - signals_by_ticker: dictionary of ticker → signals
-              - max_shares: maximum shares allowed per ticker
-              - portfolio_cash: current cash in portfolio
-              - portfolio_positions: current positions (both long and short)
-              - current_prices: current prices for each ticker
-              - margin_requirement: current margin requirement for short positions (e.g., 0.5 means 50%)
-              - total_margin_used: total margin currently in use
-              """,
+              _("portfolio_manager.prompt.system"),
             ),
             (
               "human",
-              """Based on the team's analysis, make your trading decisions for each ticker.
-
-              Here are the signals by ticker:
-              {signals_by_ticker}
-
-              Current Prices:
-              {current_prices}
-
-              Maximum Shares Allowed For Purchases:
-              {max_shares}
-
-              Portfolio Cash: {portfolio_cash}
-              Current Positions: {portfolio_positions}
-              Current Margin Requirement: {margin_requirement}
-              Total Margin Used: {total_margin_used}
-
-              Output strictly in JSON with the following structure:
-              {{
-                "decisions": {{
-                  "TICKER1": {{
-                    "action": "buy/sell/short/cover/hold",
-                    "quantity": integer,
-                    "confidence": float between 0 and 100,
-                    "reasoning": "string"
-                  }},
-                  "TICKER2": {{
-                    ...
-                  }},
-                  ...
-                }}
-              }}
-              """,
+              _("portfolio_manager.prompt.human"),
             ),
         ]
     )

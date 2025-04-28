@@ -1,0 +1,60 @@
+{
+  "docstrings": {
+    "agent": "Analyzes stocks using Benjamin Graham's classic value-investing principles: 1. Earnings stability over multiple years. 2. Solid financial strength (low debt, adequate liquidity). 3. Discount to intrinsic value (e.g. Graham Number or net-net). 4. Adequate margin of safety.",
+    "analyze_earnings_stability": "Graham wants at least several years of consistently positive earnings (ideally 5+). We'll check: 1. Number of years with positive EPS. 2. Growth in EPS from first to last period.",
+    "analyze_financial_strength": "Graham checks liquidity (current ratio >= 2), manageable debt, and dividend record (preferably some history of dividends).",
+    "analyze_valuation_graham": "Core Graham approach to valuation: 1. Net-Net Check: (Current Assets - Total Liabilities) vs. Market Cap 2. Graham Number: sqrt(22.5 * EPS * Book Value per Share) 3. Compare per-share price to Graham Number => margin of safety",
+    "generate_graham_output": "Generates an investment decision in the style of Benjamin Graham: - Value emphasis, margin of safety, net-nets, conservative balance sheet, stable earnings. - Return the result in a JSON structure: { signal, confidence, reasoning }."
+  },
+  "status_messages": {
+    "fetching_metrics": "Fetching financial metrics",
+    "gathering_line_items": "Gathering financial line items",
+    "getting_market_cap": "Getting market cap",
+    "analyzing_earnings": "Analyzing earnings stability",
+    "analyzing_strength": "Analyzing financial strength",
+    "analyzing_valuation": "Analyzing Graham valuation",
+    "generating_analysis": "Generating Ben Graham analysis",
+    "done": "Done"
+  },
+  "analysis_details": {
+    "insufficient_data": "Insufficient data for earnings stability analysis",
+    "not_enough_eps": "Not enough multi-year EPS data.",
+    "eps_all_positive": "EPS was positive in all available periods.",
+    "eps_mostly_positive": "EPS was positive in most periods.",
+    "eps_negative": "EPS was negative in multiple periods.",
+    "eps_grew": "EPS grew from earliest to latest period.",
+    "eps_not_grew": "EPS did not grow from earliest to latest period.",
+    "no_financial_data": "No data for financial strength analysis",
+    "current_ratio_solid": "Current ratio = {ratio:.2f} (>=2.0: solid).",
+    "current_ratio_moderate": "Current ratio = {ratio:.2f} (moderately strong).",
+    "current_ratio_weak": "Current ratio = {ratio:.2f} (<1.5: weaker liquidity).",
+    "current_ratio_missing": "Cannot compute current ratio (missing or zero current_liabilities).",
+    "debt_ratio_conservative": "Debt ratio = {ratio:.2f}, under 0.50 (conservative).",
+    "debt_ratio_acceptable": "Debt ratio = {ratio:.2f}, somewhat high but could be acceptable.",
+    "debt_ratio_high": "Debt ratio = {ratio:.2f}, quite high by Graham standards.",
+    "debt_ratio_missing": "Cannot compute debt ratio (missing total_assets).",
+    "dividends_majority": "Company paid dividends in the majority of the reported years.",
+    "dividends_some": "Company has some dividend payments, but not most years.",
+    "dividends_none": "Company did not pay dividends in these periods.",
+    "dividends_missing": "No dividend data available to assess payout consistency.",
+    "insufficient_valuation": "Insufficient data to perform valuation",
+    "ncav_value": "Net Current Asset Value = {value:,.2f}",
+    "ncav_per_share": "NCAV Per Share = {value:,.2f}",
+    "price_per_share": "Price Per Share = {value:,.2f}",
+    "net_net_strong": "Net-Net: NCAV > Market Cap (classic Graham deep value).",
+    "net_net_moderate": "NCAV Per Share >= 2/3 of Price Per Share (moderate net-net discount).",
+    "net_net_missing": "NCAV not exceeding market cap or insufficient data for net-net approach.",
+    "graham_number": "Graham Number = {value:.2f}",
+    "graham_number_missing": "Unable to compute Graham Number (EPS or Book Value missing/<=0).",
+    "margin_of_safety": "Margin of Safety (Graham Number) = {value:.2%}",
+    "margin_high": "Price is well below Graham Number (>=50% margin).",
+    "margin_some": "Some margin of safety relative to Graham Number.",
+    "margin_low": "Price close to or above Graham Number, low margin of safety.",
+    "price_invalid": "Current price is zero or invalid; can't compute margin of safety.",
+    "default_error": "Error in generating analysis; defaulting to neutral."
+  },
+  "prompt": {
+    "system": "You are a Benjamin Graham AI agent, making investment decisions using his principles: 1. Insist on a margin of safety by buying below intrinsic value (e.g., using Graham Number, net-net). 2. Emphasize the company's financial strength (low leverage, ample current assets). 3. Prefer stable earnings over multiple years. 4. Consider dividend record for extra safety. 5. Avoid speculative or high-growth assumptions; focus on proven metrics.  When providing your reasoning, be thorough and specific by: 1. Explaining the key valuation metrics that influenced your decision the most (Graham Number, NCAV, P/E, etc.) 2. Highlighting the specific financial strength indicators (current ratio, debt levels, etc.) 3. Referencing the stability or instability of earnings over time 4. Providing quantitative evidence with precise numbers 5. Comparing current metrics to Graham's specific thresholds (e.g., Current ratio of 2.5 exceeds Graham's minimum of 2.0) 6. Using Benjamin Graham's conservative, analytical voice and style in your explanation  For example, if bullish: The stock trades at a 35% discount to net current asset value, providing an ample margin of safety. The current ratio of 2.5 and debt-to-equity of 0.3 indicate strong financial position... For example, if bearish: Despite consistent earnings, the current price of $50 exceeds our calculated Graham Number of $35, offering no margin of safety. Additionally, the current ratio of only 1.2 falls below Graham's preferred 2.0 threshold...  Return a rational recommendation: bullish, bearish, or neutral, with a confidence level (0-100) and thorough reasoning.",
+    "human": "Based on the following analysis, create a Graham-style investment signal:  Analysis Data for {ticker}: {analysis_data}  Return JSON exactly in this format: {{   \"signal\": \"bullish\" or \"bearish\" or \"neutral\",   \"confidence\": float (0-100),   \"reasoning\": \"string\" }}"
+  }
+}
